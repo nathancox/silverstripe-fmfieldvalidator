@@ -61,7 +61,7 @@ class FMFormFieldExtension extends Extension {
 	 * @param array $messages 
 	 */
 	function setValidationMessages($messages) {
-		$this->validationMessages = messages;
+		$this->validationMessages = $messages;
 	}
 	
 	/**
@@ -87,6 +87,26 @@ class FMFormFieldExtension extends Extension {
 		}
 	}
 	
+	
+	/**
+	 * Returns the message for a field, falling back to default if not defined
+	 * 
+	 * @param string $ruleName 
+	 * @param string $fieldName 
+	 * @return string
+	 */
+	function getErrorMessage($ruleName) {
+		if (isset($this->validationMessages[$ruleName])) {
+			return $this->validationMessages[$ruleName];
+		} else if ($defaultMessage = FMFieldValidator::get_default_message($ruleName)) {
+			return $defaultMessage;
+		} else if ($method = FMFieldValidator::get_validation_method($ruleName)) {
+			return $method->defaultMessage();
+		} else {
+			return 'error validating field';
+		}
+	}
+	
 	/**
 	 * set the message for a given rule
 	 * 
@@ -95,6 +115,35 @@ class FMFormFieldExtension extends Extension {
 	 */
 	function setValidationMessage($ruleName, $message) {
 		$this->validationMessages[$ruleName] = $message;
+	}
+	
+	
+	function validatePHP($validator) {
+		$rules = $this->getValidationRules();
+		$valid = true;
+		
+		foreach ($rules as $ruleName => $ruleValue) {
+			if ($method = FMFieldValidator::get_validation_method($ruleName)) {
+				$validates = $method->validate($this->owner, $ruleValue, $validator->getForm());
+				$valid = ($validates && $valid);
+				
+				if (!$validates) {
+					$validator->validationError(
+						$this->owner->Name(),
+						$this->getErrorMessage($ruleName),
+						$ruleName
+					);
+				}
+				
+			} else {
+				if (!FMFieldValidator::$ignore_missing_methods) {
+					trigger_error('Field '.$this->owner->Name().' is trying to validate with a non-existant rule ('.$ruleName.')');
+					//	info('@TODO: disabled trigger_error for invalid method names ('.$ruleName.')');
+				}
+			}
+		}
+		
+		return $valid;
 	}
 	
 	

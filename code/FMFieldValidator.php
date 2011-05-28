@@ -1,9 +1,12 @@
 <?php
 
 
-class FMValidator extends Validator {
-	var $rules = array();
-	var $messages = array();
+class FMFieldValidator extends Validator {
+	
+	/**
+	 * an array of project-wide default error messages in [ruleName] => "message" format
+	 */
+	static $default_messages = array();
 	
 	/**
 	 * for passing extra javascriptOptions to the js validate() method
@@ -27,7 +30,7 @@ class FMValidator extends Validator {
 	/**
 	 * an array of project-wide default error messages in [ruleName] => "message" format
 	 */
-	static $default_messages = array();
+	//static $default_messages = array();
 	
 	/**
 	 * if false, throws an error when told to validate a method that doesn't exist, if true it just ignores the rule
@@ -37,18 +40,8 @@ class FMValidator extends Validator {
 	
 	/**
 	 * 
-	 * @param array $rules 
-	 * @param array $messages 
 	 */
-	function __construct($rules = null, $messages = null) {
-		if (is_array($rules)) {
-			$this->setRules($rules);
-		}
-		
-		if (is_array($messages)) {
-			$this->setMessages($messages);
-		}
-		
+	function __construct() {
 		parent::__construct();
 	}
 	
@@ -57,169 +50,76 @@ class FMValidator extends Validator {
 		return $this->form->dataFieldByName($fieldName);
 	}
 	
-	/****************************** RULES ******************************/
 	
-	/**
-		* @return array
-	 */
-	function getRules() {
-		// @TODO
-		return $this->rules;
+	function getFields() {
+		return $this->form->fields();
 	}
 	
-	/**
-	 * @param string $field 
-	 * @return array
-	 */
-	function getRulesForField($fieldName) {
-		if ($field = $this->getField($fieldName) && $rules = $field->getValidationRules()) {
-			return $rules;
-		} else {
-			return array();
-		}
-	}
 	
-	/**
-	 * @param array $rules 
-	 */
-	function setRules($rules) {
-		foreach($rules as $fieldName => $fieldRules) {
-			$this->setRulesForField($fieldName, $fieldRules);
-		}
-	}
-	
-	/**
-	 * @param string $fieldName 
-	 * @param array $rules 
-	 */
-	function setRulesForField($fieldName, $rules) {
-		if (!is_array($rules)) {
-			$rules = array(
-				$rules => true
-			);
+	function getValidation() {
+		$fields = $this->getFields();
+		$form = $this->form;
+		
+		$allRules = array();
+		$allMessages = array();
+		
+		foreach ($fields as $field) {
+			$fieldName = $field->Name();
+			
+			$fieldRules = $field->getValidationRules();
+			if ($fieldRules) {
+				$allRules[$fieldName] = $fieldRules;
+				
+				$fieldMessages = $field->getValidationMessages();
+				$allMessages[$fieldName] = $fieldMessages;
+			}
 		}
 		
-		if ($field = $this->getField($fieldName)) {
-			$field->setRules($rules);
-		}
-		
-	}
-	
-	/**
-	 * @param string $fieldName 
-	 * @param string $rule 
-	 * @param string $value 
-	 */
-	function addRule($fieldName, $rule, $value) {
-		if ($field = $this->getField($fieldName)) {
-			$field->addRule($rule, $value);
-		}
+		return array(
+			'rules' => $allRules,
+			'messages' => $allMessages
+		);
 	}
 
+	function getForm() {
+		return $this->form;
+	}
 	
+	
+	/****************************** RULES ******************************/
+	
+	function getValidationRules() {
+		$fields = $this->getFields();
+		$form = $this->form;
+		$allRules = array();
+		
+		foreach ($fields as $field) {
+			$fieldRules = $field->getValidationRules();
+			$fieldName = $field->Name();
+			$allRules[$fieldName] = $fieldRules;
+		}
+		
+		return $allRules;
+	}
 	
 	/****************************** MESSAGES ******************************/
 
-	/**
-	 * 
-	 */
-	function getMessages() {
-		// @TODO
-		return $this->messages;
-	}
 	
-	/**
-	 * @param string $fieldName 
-	 * @return array
-	 */
-	function getMessagesForField($fieldName) {
-		if ($field = $this->getField($fieldName) && $messages = $field->getValidationMessages()) {
-			return $messages;
-		} else {
-			return array();
-		}
-	}
-	
-	
-	/**
-	 * Returns all messages for all fields, using getErrorMessage()
-	 * 
-	 * @return array
-	 */
-	function getErrorMessages() {
-		// @TODO
-		$output = array();
+	function getValidationMessages() {
+		$fields = $this->getFields();
+		$form = $this->form;
+		$allMessages = array();
 		
-		$rules = $this->getRules();
-		foreach ($rules as $fieldName => $fieldRules) {
-			$output[$fieldName] = array();
-			foreach ($fieldRules as $ruleName => $ruleValue) {
-				$output[$fieldName][$ruleName] = $this->getErrorMessage($ruleName, $fieldName);
-			}
-			
+		foreach ($fields as $field) {
+			$fieldMessages = $field->getValidationMessages();
+			$fieldName = $field->Name();
+			$allMessages[$fieldName] = $fieldMessages;
 		}
 		
-		return $output;
-	}
-	
-	/**
-	 * Returns the message for a field, falling back to default if not defined
-	 * 
-	 * @param string $ruleName 
-	 * @param string $fieldName 
-	 * @return string
-	 */
-	function getErrorMessage($ruleName, $fieldName = false) {
-		// @TODO
-		if ($fieldName && isset($this->messages[$fieldName]) && isset($this->messages[$fieldName][$ruleName])) {
-			return $this->messages[$fieldName][$ruleName];
-		} else if ($defaultMessage = self::get_default_message($ruleName)) {
-			return $defaultMessage;
-		} else if ($method = self::get_validation_method($ruleName)) {
-			return $method->defaultMessage();
-		} else {
-			return 'error validating field';
-		}
+		return $allMessages;
 	}
 	
 	
-	/**
-	 * @param array $messages 
-	 */
-	function setMessages($messages) {
-		foreach($messages as $fieldName => $fieldMessages) {
-			$this->setMessagesForField($fieldName, $fieldMessages);
-		}
-	}
-	
-	/**
-	 * @param string $fieldName
-	 * @param array $messages 
-	 */
-	function setMessagesForField($fieldName, $messages) {
-		if ($field = $this->getField($fieldName)) {
-			if (is_array($messages)) {
-				$field->setValidationMessages($messages);
-			} else {
-				if (is_array($field->getValidationRules())) {
-					$firstRuleName = key($field->getValidationRules());
-					if (!$field->getValidationMessage($firstRuleName)) {
-						$this->setValidationMessage($firstRuleName, $messages);
-					}
-				}
-			}
-		}
-	}
-
-	/**
-	 * @param string $fieldName 
-	 * @param string $rule 
-	 * @param string $message 
-	 */
-	function addMessage($fieldName, $rule, $message) {
-		$field = $this->getField($fieldName);
-		$field->addValidationMessage($rule, $message);
-	}
 
 
 
@@ -263,7 +163,6 @@ class FMValidator extends Validator {
 			return false;
 		}
 	}
-	
 
 	/****************************** EXTRA PARAMETERS ******************************/
 
@@ -391,8 +290,12 @@ JS
 		// we can't just merge the arrays and Convert::array2json() the whole thing because functions in
 		// extra javascriptOptions get converted and break
 	//	$output = '{';
-		$output = '"rules": ' . Convert::array2json($this->getRulesForJavascript());
-		$output .= ', "messages": ' . Convert::array2json($this->getErrorMessages());
+	
+		$validation = $this->getValidation();
+		
+		// don't do Convert::array2json($validation) because it wraps in an extra {} that we don't want
+		$output = '"rules": ' . Convert::array2json($validation['rules']);
+		$output .= ', "messages": ' . Convert::array2json($validation['messages']);
 		
 		// loop over the extra javascriptOptions
 		foreach ($this->getJavascriptOptionsWithDefaults() as $key => $value) {
@@ -421,19 +324,22 @@ JS
 		* @return array
 	 */
 	function getRulesForJavascript() {
-		$allRules = $this->getRules();
+		$fields = $this->getFields();
 		$form = $this->form;
+		$allRules = array();
 		
-		foreach ($allRules as $fieldName => $rules) {
-			$field = $this->form->dataFieldByName($fieldName);
+		foreach ($fields as $field) {
+			$rules = $field->getValidationRules();
+			$fieldName = $field->Name();
 			foreach ($rules as $ruleName => $ruleValue) {
-			
 				if ($method = self::get_validation_method($ruleName)) {
 					if ($newValue = $method->convertRuleForJavascript($field, $ruleValue, $form)) {
+						if (!isset($allRules[$fieldName])) {
+							$allRules[$fieldName] = array();
+						}
 						$allRules[$fieldName][$ruleName] = $newValue;
 					}
 				}
-				
 			}
 		}
 		
@@ -444,7 +350,7 @@ JS
 	function includeCustomJavascriptMethods() {
 		// include custom rules
 		$fields = $this->form->Fields();
-		$rules = $this->getRules();
+		$rules = $this->getValidationRules();
 		
 		foreach ($rules as $fieldName => $fieldRules) {
 			foreach ($fieldRules as $ruleName => $ruleValue) {
@@ -469,48 +375,15 @@ JS
 	function php($data) {
 		$valid = true;
 
-		$fields = $this->form->Fields();
-		$rules = $this->getRules();
+		$fields = $this->getFields();
+		$form = $this->form;
+		
+		foreach ($fields as $field) {
+			$validates = $field->validatePHP($this);
+			$valid = ($validates && $valid);
+		}
 
 		
-		foreach($rules as $fieldName => $fieldRules) {
-			$field = $fields->dataFieldByName($fieldName);
-			if (!$field) {
-				// @TODO: what?  Ignore it?  Fail validaton?
-			//	trigger_error('Trying to validate non-existent field '.$fieldName);
-				continue;
-			}
-			
-			// @TODO: do we want to use the field's built-in validation too?
-			//$valid = ($field->validate($this) && $valid);
-			
-			
-			// loop over each rule
-			foreach($fieldRules as $ruleName => $ruleValue) {
-				// if this is a valid rule then check against it, otherwise have an error so we know
-				if ($method = self::get_validation_method($ruleName)) {
-					$validates = $method->validate($field, $ruleValue, $this->form);
-					$valid = ($validates && $valid);
-					
-					if (!$validates) {
-						$this->validationError(
-							$fieldName,
-							$this->getErrorMessage($ruleName, $fieldName),
-							$ruleName
-						);
-					}
-					
-				} else {
-					if (!self::ignore_missing_methods()) {
-						trigger_error('Field '.$fieldName.' is trying to validate with a non-existant rule ('.$ruleName.')');
-						//	info('@TODO: disabled trigger_error for invalid method names ('.$ruleName.')');
-					}
-				}
-			}
-				
-				
-			
-		}
 		
 		return $valid;
 	}
