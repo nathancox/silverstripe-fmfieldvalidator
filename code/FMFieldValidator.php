@@ -56,7 +56,7 @@ class FMFieldValidator extends Validator {
 	}
 	
 	
-	function getValidation() {
+	function getValidation($forJavascript = false) {
 		$fields = $this->getFields();
 		$form = $this->form;
 		
@@ -66,7 +66,11 @@ class FMFieldValidator extends Validator {
 		foreach ($fields as $field) {
 			$fieldName = $field->Name();
 			
-			$fieldRules = $field->getValidationRules();
+			if ($forJavascript) {
+				$fieldRules = $field->getValidationRulesForJavascript();
+			} else {
+				$fieldRules = $field->getValidationRules();
+			}
 			if ($fieldRules) {
 				$allRules[$fieldName] = $fieldRules;
 				
@@ -101,6 +105,34 @@ class FMFieldValidator extends Validator {
 		
 		return $allRules;
 	}
+	
+	
+	
+	
+	function getRulesForJavascript() {
+		$fields = $this->getFields();
+		$form = $this->form;
+		$allRules = array();
+		
+		foreach ($fields as $field) {
+			$rules = $field->getValidationRules();
+			$fieldName = $field->Name();
+			foreach ($rules as $ruleName => $ruleValue) {
+				
+				if ($method = self::get_validation_method($ruleName)) {
+					
+					if ($newValue = $method->convertRuleForJavascript($field, $ruleValue, $form)) {
+						if (!isset($allRules[$fieldName])) {
+							$allRules[$fieldName] = array();
+						}
+						$allRules[$fieldName][$ruleName] = $newValue;
+					}
+				}
+			}
+		}
+		return $allRules;
+	}
+	
 	
 	/****************************** MESSAGES ******************************/
 
@@ -291,7 +323,7 @@ JS
 		// extra javascriptOptions get converted and break
 	//	$output = '{';
 	
-		$validation = $this->getValidation();
+		$validation = $this->getValidation(true);
 		
 		// don't do Convert::array2json($validation) because it wraps in an extra {} that we don't want
 		$output = '"rules": ' . Convert::array2json($validation['rules']);
@@ -318,33 +350,7 @@ JS
 	}
 	
 	
-	/**
-		* returns the rules array, but filtered for anything that needs to change when used in the javascript
-		* 
-		* @return array
-	 */
-	function getRulesForJavascript() {
-		$fields = $this->getFields();
-		$form = $this->form;
-		$allRules = array();
-		
-		foreach ($fields as $field) {
-			$rules = $field->getValidationRules();
-			$fieldName = $field->Name();
-			foreach ($rules as $ruleName => $ruleValue) {
-				if ($method = self::get_validation_method($ruleName)) {
-					if ($newValue = $method->convertRuleForJavascript($field, $ruleValue, $form)) {
-						if (!isset($allRules[$fieldName])) {
-							$allRules[$fieldName] = array();
-						}
-						$allRules[$fieldName][$ruleName] = $newValue;
-					}
-				}
-			}
-		}
-		
-		return $allRules;
-	}
+
 	
 	
 	function includeCustomJavascriptMethods() {

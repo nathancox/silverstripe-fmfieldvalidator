@@ -28,6 +28,23 @@ class FMFormFieldExtension extends Extension {
 		return $this->validationRules;
 	}
 	
+	
+	function getValidationRulesForJavascript() {
+		$fieldName = $this->owner->Name();
+		$rules = $this->getValidationRules();
+		foreach ($rules as $ruleName => $ruleValue) {
+			if ($method = FMFieldValidator::get_validation_method($ruleName)) {
+				
+				if ($newValue = $method->convertRuleForJavascript($this, $ruleValue, $this->owner->getForm())) {
+					
+					$rules[$ruleName] = $newValue;
+				}
+			}
+		}
+		return $rules;
+	}
+	
+	
 	/**
 	 * return the details for a given rule on this field, if they exist
 	 * 
