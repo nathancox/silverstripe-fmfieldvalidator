@@ -52,7 +52,7 @@ class FMFieldValidator extends Validator {
 	
 	
 	function getFields() {
-		return $this->form->fields();
+		return $this->form->fields()->dataFields();
 	}
 	
 	
