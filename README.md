@@ -27,7 +27,7 @@ rule system, project-wide defaults and other bits and pieces.
 
 This is a variant of [FMValidator](https://github.com/nathancox/silverstripe-fmvalidator) that uses a FormField extension to store rules and messages instead of setting them in the validator itself
 
-NOTE: You need FMValidationMethod and it's subclasses from the FMValidator project for this to work.  They might be added here later.
+NOTE: This uses the same ValidationMethod classes FMValidator uses, so you'll have to delete one set if you install both modules in the same project for some reason.
 
 Known Issues
 ------------

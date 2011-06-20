@@ -163,7 +163,7 @@ class FMFieldValidator extends Validator {
 	static function set_default_messages($messages) {
 		if (is_array($messages)) {
 			foreach($messages as $ruleName => $message) {
-				self::addDefaultMessage($ruleName, $message);
+				self::add_default_message($ruleName, $message);
 			}
 		}
 	}
