@@ -78,7 +78,7 @@ class FMFieldValidator extends Validator {
 				$allMessages[$fieldName] = $fieldMessages;
 			}
 		}
-		
+				
 		return array(
 			'rules' => $allRules,
 			'messages' => $allMessages
@@ -130,6 +130,7 @@ class FMFieldValidator extends Validator {
 				}
 			}
 		}
+		
 		return $allRules;
 	}
 	
@@ -163,7 +164,7 @@ class FMFieldValidator extends Validator {
 	static function set_default_messages($messages) {
 		if (is_array($messages)) {
 			foreach($messages as $ruleName => $message) {
-				self::add_default_message($ruleName, $message);
+				self::addDefaultMessage($ruleName, $message);
 			}
 		}
 	}
@@ -296,8 +297,9 @@ class FMFieldValidator extends Validator {
 		$params = $this->javascript();
 		
 		// @TODO: find a better way of including the js that doesn't involve hacking here if we're using a different version or jQuery or something
-		Requirements::javascript('http://ajax.googleapis.com/ajax/libs/jquery/1.5.1/jquery.js');
-		Requirements::javascript('http://ajax.aspnetcdn.com/ajax/jquery.validate/1.8/jquery.validate.min.js');
+		//Requirements::javascript('http://ajax.googleapis.com/ajax/libs/jquery/1.5.1/jquery.js');
+			Requirements::javascript('http://ajax.aspnetcdn.com/ajax/jquery.validate/1.8/jquery.validate.min.js');
+	//	Requirements::javascript('themes/quickleentest/javascript/jquery.validate.js');
 		
 		$this->includeCustomJavascriptMethods();
 		
@@ -324,6 +326,7 @@ JS
 	//	$output = '{';
 	
 		$validation = $this->getValidation(true);
+		
 		
 		// don't do Convert::array2json($validation) because it wraps in an extra {} that we don't want
 		$output = '"rules": ' . Convert::array2json($validation['rules']);
@@ -380,7 +383,6 @@ JS
 	
 	function php($data) {
 		$valid = true;
-
 		$fields = $this->getFields();
 		$form = $this->form;
 		
@@ -389,8 +391,6 @@ JS
 			$valid = ($validates && $valid);
 		}
 
-		
-		
 		return $valid;
 	}
 	

@@ -4,9 +4,6 @@ class FMFormFieldExtension extends Extension {
 	var $validationRules = array();
 	var $validationMessages = array();
 	
-	function test() {
-		info($this->getValidationRules(), $this->owner->class);
-	}
 	
 	
 	
@@ -138,13 +135,13 @@ class FMFormFieldExtension extends Extension {
 	function validatePHP($validator) {
 		$rules = $this->getValidationRules();
 		$valid = true;
-		
 		foreach ($rules as $ruleName => $ruleValue) {
+		
 			if ($method = FMFieldValidator::get_validation_method($ruleName)) {
 				$validates = $method->validate($this->owner, $ruleValue, $validator->getForm());
 				$valid = ($validates && $valid);
-				
 				if (!$validates) {
+					
 					$validator->validationError(
 						$this->owner->Name(),
 						$this->getErrorMessage($ruleName),
@@ -155,11 +152,9 @@ class FMFormFieldExtension extends Extension {
 			} else {
 				if (!FMFieldValidator::$ignore_missing_methods) {
 					trigger_error('Field '.$this->owner->Name().' is trying to validate with a non-existant rule ('.$ruleName.')');
-					//	info('@TODO: disabled trigger_error for invalid method names ('.$ruleName.')');
 				}
 			}
 		}
-		
 		return $valid;
 	}
 	

@@ -12,6 +12,7 @@ class RequiredValidationMethod extends FMValidationMethod {
 
 	function php($field, $ruleValue, $form) {		
 		$fieldValue = $field->value();
+		
 		$valid = false;
 		
 		// if it was specified as false for some reason then return true, since it's not required
@@ -28,7 +29,7 @@ class RequiredValidationMethod extends FMValidationMethod {
 		} else {
 			$valid = (strlen($fieldValue)) ? true : false;
 		}
-				
+		
 		return $valid;
 	}
 	
