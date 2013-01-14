@@ -1,19 +1,14 @@
 <?php
 
 class EqualToValidationMethod extends FMValidationMethod {
-	var $name = 'equalTo';
-	
-	// we don't need to add any js, jquery.validate already supports this
-	function javascript() {
-		return false;
-	}
+	var $ruleName = 'equalTo';
 	
 	function php($field, $ruleValue, $form) {
 		$valid = false;
-		$fieldValue = $field->value();
-		$fields = $form->Fields();
+		$fieldValue = $this->getField()->value();
+		$fields = $this->getForm()->Fields();
 		
-		if ($equalToField = $fields->dataFieldByName($ruleValue)) {
+		if ($equalToField = $fields->dataFieldByName($this->getFieldRule())) {
 			$valid = ($fieldValue == $equalToField->value());
 		} else {
 			// @TODO: what do we do if the field we're matching with doesn't exist?
@@ -27,8 +22,8 @@ class EqualToValidationMethod extends FMValidationMethod {
 	}
 	
 	
-	function convertRuleForJavascript($field, $ruleValue, $form) {
-		$otherField = $form->dataFieldByName($ruleValue);
+	function convertRuleForJavascript() {
+		$otherField = $this->getForm()->fields->dataFieldByName($this->getFieldRule());
 		if ($otherField) {
 			return '#'.$otherField->ID();
 		} else {

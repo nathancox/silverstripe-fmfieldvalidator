@@ -3,7 +3,7 @@
 	Test class: actually does the same thing as "equal"
 */
 class IsExactlyValidationMethod extends FMValidationMethod {
-	var $name = 'isExactly';
+	var $ruleName = 'isExactly';
 	
 	function javascript() {
 		$script = <<<JS
@@ -20,14 +20,12 @@ JS
 	}
 	
 	function php($field, $ruleValue, $form) {
-		$valid = false;
-		$fieldValue = $field->value();
+		$fieldValue = $this->getField()->value();
 		
-		if ($fieldValue == $ruleValue) {
-			$valid = true;
+		if ($fieldValue !== $this->getFieldRule()) {
+			$this->setValid(false);
 		}
 		
-		return $valid;
 	}
 	
 	
