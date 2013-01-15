@@ -1,13 +1,11 @@
 <?php
-
+/**
+ * Makes the field invalid if it's not a properly formatted email address.
+ * Uses the default email checking from jquery.validate on the client side
+ */
 class EmailValidationMethod extends FMValidationMethod {
-	var $name = 'email';
+	var $ruleName = 'email';
 	var $defaultMessage = 'email address not valid';
-	
-	// we don't need to add any js, jquery.validate already supports this
-	function javascript() {
-		return false;
-	}
 	
 	function php($field, $ruleValue, $form) {
 		$valid = false;
