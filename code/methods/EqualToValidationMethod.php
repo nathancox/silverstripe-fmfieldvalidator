@@ -1,5 +1,31 @@
 <?php
-
+/**
+ * Valid if the field's value is equal to the value of another field (specified by it's name).
+ *
+ * eg:
+ * 			$fields->push($passwordField = new TextField('Password', 'Password'));
+ *
+ *			...
+ *   		
+ *   		$fields->push($confirmPasswordField = new TextField('ConfirmPassword', 'Confirm Password'));
+ * 			$confirmPasswordField->setValidationRules(array(
+ *				'equalTo' => 'Password'	
+ *			));
+ *			$confirmPasswordField->setValidationMessages(array(
+ *				'equalTo' => "whoops, your passwords don't match"
+ *			));
+ *
+ * It could also be formatted like this:
+ *
+ *			$passwordField->setValidationRules(array(
+ *				'equalTo' => array(
+ *					'value' => 'Password',
+ *					'message' => "whoops, your passwords don't match"
+ *				)
+ *			));
+ *
+ * 
+ */
 class EqualToValidationMethod extends FMValidationMethod {
 	var $ruleName = 'equalTo';
 	

@@ -41,8 +41,11 @@ class FMFieldValidatorExtension extends Extension {
 	function setValidationRule($ruleName, $settings) {
 		
 		$value = $settings;
-		if (is_array($settings) && isset($settings['value'])) {
-			$value = $settings['value'];
+		if (is_array($settings)) {
+			if (isset($settings['value'])) {
+			 	$value = $settings['value'];
+			}
+
 			if (isset($settings['message'])) {
 				$this->setValidationMessage($ruleName, $settings['message']);
 			}

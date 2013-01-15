@@ -1,5 +1,8 @@
 <?php
-
+/**
+ * Makes a field required.  
+ * Uses the default required checking from jquery.validate on the client side
+ */
 class RequiredValidationMethod extends FMValidationMethod {
 	var $ruleName = 'required';
 	var $defaultMessage = 'this field is required';

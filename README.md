@@ -1,9 +1,13 @@
 SilverStripe FMFieldValidator
 ===================================
 
+FMFieldValidator is a custom validator for SilverStripe designed to work with the jquery.validate plugin.  It also features an extensible validation rule system, project-wide defaults and other bits and pieces.
+
+For now have a look at the wiki for more information: https://github.com/nathancox/silverstripe-fmfieldalidator/wiki
+
 Maintainer Contacts
 -------------------
-*  Nathan Cox (<nathan@flyingmonkey.co.nz>)
+* Nathan Cox (<nathan@flyingmonkey.co.nz>)
 
 Requirements
 ------------
@@ -19,15 +23,13 @@ Installation Instructions
 1. Place the files in a directory called fmfieldvalidator in the root of your SilverStripe installation
 2. Visit yoursite.com/dev/build to rebuild the database
 
-Overview
+This Version
 --------------
 
-FMFieldValidator is a custom validator for SilverStripe designed to work with the jquery.validate plugin.  It also features an extensible validation
-rule system, project-wide defaults and other bits and pieces.
+This is a partially-rewritten version for SilverStripe 3 compatibility.  It has some changes to the inner workings of FMValidationMethod, new ways to configure rules on a field and a few other things that aren't documented because I haven't decided if I'll keep them yet.  Overall though it should work like the original version most of the time.
 
-This is a variant of [FMValidator](https://github.com/nathancox/silverstripe-fmvalidator) that uses a FormField extension to store rules and messages instead of setting them in the validator itself
+You can still to get the original SilverStripe 2.X version at https://github.com/nathancox/silverstripe-fmfieldvalidator/tree/2.0
 
-NOTE: This uses the same ValidationMethod classes FMValidator uses, so you'll have to delete one set if you install both modules in the same project for some reason.
 
 Known Issues
 ------------
