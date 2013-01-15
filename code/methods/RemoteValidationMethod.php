@@ -40,7 +40,7 @@
 */
 
 class RemoteValidationMethod extends FMValidationMethod {
-	var $name = 'remote';
+	var $ruleName = 'remote';
 	var $defaultMessage = 'this field is invalid';
 	
 	// we don't need to add any js, jquery.validate already supports this

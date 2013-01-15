@@ -2,14 +2,81 @@
 
 
 class FMFieldValidator extends Validator {
-	
+
 	/**
-	 * an array of project-wide default error messages in [ruleName] => "message" format
+	 * Stores all the validation methods in name => ClassName format
+	 * 
+	 * @var array
+	 */
+	private static $validation_classes;
+
+	/**
+	 * An array of project-wide default error messages in [ruleName] => "message" format
+	 * 
+	 * @var array
 	 */
 	static $default_messages = array();
-	
+
+
+
+	/**
+	 * The site-wide location to include jQuery from
+	 * By default jQuery isn't included here since 90% of the time it's there already.
+	 * You can set it in _config.php using FMFieldValidator::set_jquery_location(); if you aren't 
+	 * including it elsewhere or you have an inclusion order problem.
+	 * Version that comes with SilverStripe is at framework/thirdparty/jquery/jquery.min.js
+	 * 
+	 * @var string
+	 */
+	static $jquery_location = null;
+
+
+	/**
+	 * The site-wide location to include jQuery from
+	 * By default we use our own copy of validate because it's newer than the one in the framework.
+	 * You can set change it in _config.php using FMFieldValidator::set_jquery_validate_location();
+	 * Version that comes with SilverStripe is at framework/thirdparty/jquery/jquery.min.js
+	 * 
+	 * @var string
+	 */
+	static $jquery_validate_location = 'fmfieldvalidator/thirdparty/jquery.validate.min.js';
+
+
+	/**
+	 * 
+	 * 
+	 * @var boolean
+	 */
+	static $include_javascript_methods = true;
+
+	/**
+	 * The instance-specific location to include jQuery from
+	 * 
+	 * @var string
+	 */
+	var $jQueryLocation = null;
+
+	/**
+	 * The instance-specific location to include jQuery from
+	 * 
+	 * @var string
+	 */
+	var $jQueryValidateLocation = null;
+
+
+	/**
+	 * 
+	 * 
+	 * @var boolean
+	 */
+	var $includeJavascriptMethods;
+
+
+
 	/**
 	 * for passing extra javascriptOptions to the js validate() method
+	 * 
+	 * @var boolean
 	 */
 	var $extraJavascriptOptions = array();
 	
@@ -21,151 +88,116 @@ class FMFieldValidator extends Validator {
 		'errorElement' => "span",
 		'errorPlacement' => "function(error, element) { error.appendTo($(element).closest('.field')); }"
 	);
-	
-	/**
-	 * an array of singletons for the subclasses of FMValidationMethod
-	 */
-	static $validation_methods = array();
-	
-	/**
-	 * an array of project-wide default error messages in [ruleName] => "message" format
-	 */
-	//static $default_messages = array();
-	
-	/**
-	 * if false, throws an error when told to validate a method that doesn't exist, if true it just ignores the rule
-	 */
-	static $ignore_missing_methods = false;
-	
-	
-	/**
-	 * 
-	 */
+
+
+
+
+
 	function __construct() {
 		parent::__construct();
 	}
 	
-	
-	function getField($fieldName) {
-		return $this->form->dataFieldByName($fieldName);
-	}
-	
-	
-	function getFields() {
-		return $this->form->fields()->dataFields();
-	}
-	
-	
-	function getValidation($forJavascript = false) {
+	/**
+	 * Remove all validation rules
+	 * 
+	 * @todo Maybe it would be easier to just set a "don't validate" flag?
+	 */
+	public function removeValidation() {
+		
 		$fields = $this->getFields();
-		$form = $this->form;
-		
-		$allRules = array();
-		$allMessages = array();
-		
+
 		foreach ($fields as $field) {
-			$fieldName = $field->Name();
-			
-			if ($forJavascript) {
-				$fieldRules = $field->getValidationRulesForJavascript();
-			} else {
-				$fieldRules = $field->getValidationRules();
-			}
-			if ($fieldRules) {
-				$allRules[$fieldName] = $fieldRules;
-				
-				$fieldMessages = $field->getValidationMessages();
-				$allMessages[$fieldName] = $fieldMessages;
-			}
+			$field->clearValidationRules();
 		}
-				
-		return array(
-			'rules' => $allRules,
-			'messages' => $allMessages
-		);
 	}
 
-	function getForm() {
-		return $this->form;
+	/**
+	 * We include the javascript here instead of __construct so you have time to set
+	 * 
+	 * @param Form $form
+	 */
+	public function setForm($form) {
+		$this->form = $form;
+
+		$this->includeJQuery();
+		$this->includeJQueryValidate();
+		$this->includeValidation();
+		$this->includeCustomJavascriptMethods();
+
+		return $this;
 	}
+
+
+
 	
-	
-	/****************************** RULES ******************************/
-	
-	function getValidationRules() {
-		$fields = $this->getFields();
-		$form = $this->form;
-		$allRules = array();
-		
-		foreach ($fields as $field) {
-			$fieldRules = $field->getValidationRules();
-			$fieldName = $field->Name();
-			$allRules[$fieldName] = $fieldRules;
-		}
-		
-		return $allRules;
-	}
-	
-	
-	
-	
-	function getRulesForJavascript() {
-		$fields = $this->getFields();
-		$form = $this->form;
-		$allRules = array();
-		
-		foreach ($fields as $field) {
-			$rules = $field->getValidationRules();
-			$fieldName = $field->Name();
-			foreach ($rules as $ruleName => $ruleValue) {
-				
-				if ($method = self::get_validation_method($ruleName)) {
-					
-					if ($newValue = $method->convertRuleForJavascript($field, $ruleValue, $form)) {
-						if (!isset($allRules[$fieldName])) {
-							$allRules[$fieldName] = array();
-						}
-						$allRules[$fieldName][$ruleName] = $newValue;
+	/****************************** VALIDATION METHODS ******************************/
+
+	/**
+	 * Returns an array of available validation classes. Generates the list if it doesn't exist already and saves it to FMVieldValidator::$validation_classes
+	 * 
+	 * @return array of validation methods in the format [name] => classname
+	 */
+	static function get_validation_classes() {
+		if (count(self::$validation_classes) == 0) {
+			
+			$methodClasses = ClassInfo::subclassesFor('FMValidationMethod');
+			$methods = array();
+			
+			foreach($methodClasses as $class) {
+				if ($class != 'FMValidationMethod') {
+					$singleton = singleton($class);
+					if ($singleton->ruleName == '') {
+						trigger_error('Validation class '.$class.' has no $ruleName', E_USER_WARNING);
+						continue;
 					}
+					if (isset($methods[$singleton->ruleName])) {
+						trigger_error('Validation class with ruleName '.$singleton->ruleName.' already exists ('.$class.' & '.$methods[$singleton->ruleName]->class.')', E_USER_WARNING);
+						continue;
+					}
+					$methods[$singleton->ruleName] = $class;
 				}
 			}
+			self::$validation_classes = $methods;
 		}
 		
-		return $allRules;
+		return self::$validation_classes;
 	}
 	
-	
-	/****************************** MESSAGES ******************************/
 
-	
-	function getValidationMessages() {
-		$fields = $this->getFields();
-		$form = $this->form;
-		$allMessages = array();
-		
-		foreach ($fields as $field) {
-			$fieldMessages = $field->getValidationMessages();
-			$fieldName = $field->Name();
-			$allMessages[$fieldName] = $fieldMessages;
+	/**
+	 * Finds all subclasses of FMValidationMethod and add them to a list (if it hasn't already)
+	 * 
+	 * @param string $ruleName The name of the validation method (eg "required")
+	 * @param FormField|null $field The form field to load into the validation method (optional, this can be done manually later)
+	 * @return FMValidationMethod or null
+	 */
+	static function get_validation_method($ruleName, $field = null) {
+		if (count(self::$validation_classes) == 0) {
+			self::get_validation_classes();
 		}
-		
-		return $allMessages;
+		if (isset(self::$validation_classes[$ruleName])) {
+			$className = self::$validation_classes[$ruleName];
+			$method = new $className();
+			if ($field) {
+				$method->setField($field);
+			}
+			return $method;
+		} else {
+			trigger_error("Couldn't find an FMValidationMethod with ruleName \"$ruleName\"", E_USER_WARNING);
+		}
 	}
+
+
+	/****************************** DEFAULT MESSAGES ******************************/
 	
-	
-
-
-
 	/**
 	 * overwrites/sets the $default_messages array, letting you define messages as a project level
 	 * 
 	 * @param array $messages
 	 */
 	static function set_default_messages($messages) {
-		if (is_array($messages)) {
-			foreach($messages as $ruleName => $message) {
-				self::addDefaultMessage($ruleName, $message);
-			}
+		foreach($messages as $ruleName => $message) {
+			self::add_default_message($ruleName, $message);
 		}
 	}
 
@@ -173,10 +205,14 @@ class FMFieldValidator extends Validator {
 	 * @param string $ruleName 
 	 * @param string $message 
 	 */
-	static function add_default_message($ruleName, $message) {
+	static function set_default_message($ruleName, $message) {
 		self::$default_messages[$ruleName] = $message;
 	}
-	
+
+	static function add_default_message($ruleName, $message) {
+		self::set_default_message($ruleName, $message);
+	}
+
 	
 	/**
 	 * @return array
@@ -189,7 +225,7 @@ class FMFieldValidator extends Validator {
 	 * @param string $ruleName 
 	 * @return string
 	 */
-	function get_default_message($ruleName) {
+	static function get_default_message($ruleName) {
 		if (isset(self::$default_messages[$ruleName])) {
 			return self::$default_messages[$ruleName];
 		} else {
@@ -197,7 +233,160 @@ class FMFieldValidator extends Validator {
 		}
 	}
 
-	/****************************** EXTRA PARAMETERS ******************************/
+
+
+	/****************************** JAVASCRIPT VALIDATION ******************************/
+
+	/**
+	 * Includes the $(...).validate() block
+	 * 
+	 */
+	function includeValidation() {
+		$formID = $this->form->FormName();
+
+		$params = '';
+/*
+		$rules = self::json_encode($this->getRulesForJavaScript());
+		$messages = self::json_encode($this->getMessages());
+*/
+
+
+		$rules = $this->getRulesForJavaScript();
+		$messages = $this->getMessages();
+		$options = $this->getJavascriptOptionsWithDefaults();
+
+		$options = array_merge(array('rules' => $rules, 'messages' => $messages), $options);
+
+		$optionsJSON = self::json_encode($options);
+
+		$script = <<<JS
+			$().ready(function() {
+				$("#{$formID}").validate({$optionsJSON});
+			});
+JS
+;
+		
+		Requirements::customScript($script, $formID.'_Validation');
+	}
+
+
+	/**
+	 * Includes the javascript for custom validation methods.  Uses FMFieldValidator::getCustomJavascriptMethods();
+	 * 	Note that this is form-specific
+	 * 
+	 */
+	function includeCustomJavascriptMethods() {
+
+		if ($this->includeJavascriptMethods === true || (is_null($this->includeJavascriptMethods) && FMFieldValidator::$include_javascript_methods === true)) {
+
+			$methods = $this->getCustomJavascriptMethods();
+			foreach ($methods as $methodName => $script) {
+				$js = <<<JS
+							$.validator.addMethod("$methodName", $script);
+JS;
+			Requirements::customScript($js, 'FMValidator_'.$methodName);
+			}
+
+		}
+	}
+
+
+
+
+	/****************************** JAVASCRIPT FILES ******************************/
+
+	/**
+	 * Includes the jQuery file
+	 * 
+	 */
+	function includeJQuery() {
+		if ($this->jQueryLocation) {
+			Requirements::javascript($this->jQueryLocation);
+		} else if (self::$jquery_location) {
+			Requirements::javascript(self::$jquery_location);
+		}
+		
+	}
+
+	/**
+	 * Includes the jQuery file
+	 * 
+	 */
+	function includeJQueryValidate() {
+		if ($this->jQueryValidateLocation) {
+			Requirements::javascript($this->jQueryValidateLocation);
+		} else if (self::$jquery_validate_location) {
+			Requirements::javascript(self::$jquery_validate_location);
+		}
+	}
+
+
+
+
+
+
+
+	/**
+	 * Set the project-wide location for including jQuery
+	 * 
+	 * @param string $file
+	 */
+	static function set_jquery_location($file = null) {
+		self::$jquery_location = $file;
+	}
+
+	/**
+	 * Set the instance-specific location for including jQuery
+	 * 
+	 * @param string $file
+	 */
+	function setJQueryLocation($file = null) {
+		$this->jQueryLocation = $file;
+		return $this;
+	}
+
+
+	/**
+	 * Set the project-wide location for including jQuery Validate
+	 * 
+	 * @param string $file
+	 */
+	static function set_jquery_validate_location($file = null) {
+		self::$jquery_validate_location = $file;
+	}
+
+	/**
+	 * Set the instance-specific location for including jQuery Validate
+	 * 
+	 * @param string $file
+	 */
+	static function setJQueryValidateLocation($file = null) {
+		$this->jQueryValidateLocation = $file;
+		return $this;
+	}
+
+
+	/**
+	 * Enable or disable automatically including the JS for custom validation rules (if for example you're putting them in a .js file manually)
+	 * 
+	 * @param boolean
+	 */
+	static function set_include_javascript_methods($include) {
+		self::$include_javascript_methods = $include;
+	}
+
+	/**
+	 * Enable or disable including the JS for custom validation rules for this form 
+	 * 
+	 * @param boolean
+	 */
+	static function setIncludeJavascriptMethods($include) {
+		$this->includeJavascriptMethods = $include;
+		return $this;
+	}
+
+
+	/****************************** JAVASCRIPT OPTIONS ******************************/
 
 	/**
 	 * 
@@ -290,97 +479,18 @@ class FMFieldValidator extends Validator {
 		}
 	}
 
-	/****************************** JAVASCRIPT ******************************/
 
-	function includeJavascriptValidation() {
-		$formID = $this->form->FormName();
-		$params = $this->javascript();
-		
-		// @TODO: find a better way of including the js that doesn't involve hacking here if we're using a different version or jQuery or something
-		//Requirements::javascript('http://ajax.googleapis.com/ajax/libs/jquery/1.5.1/jquery.js');
-			Requirements::javascript('http://ajax.aspnetcdn.com/ajax/jquery.validate/1.8/jquery.validate.min.js');
-	//	Requirements::javascript('themes/quickleentest/javascript/jquery.validate.js');
-		
-		$this->includeCustomJavascriptMethods();
-		
-		$script = <<<JS
-			$().ready(function() {
-				$("#{$formID}").validate({
-					$params
-				});
-			});
-JS
-;
-		
-		Requirements::customScript($script, $formID.'_Validation');
-		
-		if($this->form) {
-			$this->form->jsValidationIncluded = true;
-		}
-	}
-	
-	// @TODO: why is this in a different method?
-	function javascript() {
-		// we can't just merge the arrays and Convert::array2json() the whole thing because functions in
-		// extra javascriptOptions get converted and break
-	//	$output = '{';
-	
-		$validation = $this->getValidation(true);
-		
-		
-		// don't do Convert::array2json($validation) because it wraps in an extra {} that we don't want
-		$output = '"rules": ' . Convert::array2json($validation['rules']);
-		$output .= ', "messages": ' . Convert::array2json($validation['messages']);
-		
-		// loop over the extra javascriptOptions
-		foreach ($this->getJavascriptOptionsWithDefaults() as $key => $value) {
-			$output .= ', "' . $key . '": ';
-			// need to treat/quote it differently depending on what the value is
-			if (is_array($value)) {
-				$output .= Convert::array2json($value);
-			} else if (substr(trim($value), 0, 8) == 'function') {
-				$output .= $value;
-			} else if (is_string($value)) {
-					$output .= '"' . $value . '"';
-			} else {
-				$output .= $value;
-			}
-		}
-		
-//		$output .= '}';
-		
-		return $output;
-	}
-	
-	
-
-	
-	
-	function includeCustomJavascriptMethods() {
-		// include custom rules
-		$fields = $this->form->Fields();
-		$rules = $this->getValidationRules();
-		
-		foreach ($rules as $fieldName => $fieldRules) {
-			foreach ($fieldRules as $ruleName => $ruleValue) {
-				$method = self::get_validation_method($ruleName);
-				if ($method && $script = $method->javascript()) {
-					Requirements::customScript(<<<JS
-						$.validator.addMethod("$ruleName", $script);
-JS
-					, 'FMValidator_'.$ruleName);
-				}
-			}
-		}
-		
-	}
-	
-	
 
 	/****************************** PHP VALIDATION ******************************/
 
 	
-	
+	/**
+	 * Performs server-side validation.  Returns true/false if the form is 
+	 * valid but the validator actually checks validation error set to decide that.
+	 * 
+	 * @param array $data The form data
+	 * @return boolean
+	 */
 	function php($data) {
 		$valid = true;
 		$fields = $this->getFields();
@@ -393,89 +503,147 @@ JS
 
 		return $valid;
 	}
-	
-	
-	
-	
-	/****************************** VALIDATION METHODS ******************************/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	/****************************** UTILTIY ******************************/
+
+	function getFields() {
+		return $this->form->fields->dataFields();
+	}
+
+
 
 	/**
-		* finds all subclasses of FMValidationMethod and adds singletons to a list (if it hasn't already)
-		* 
-		* @return array
+	 * Convert a PHP array to json but DON'T encode functions
+	 * 
+	 * @param array $input
+	 * @return string
 	 */
-	static function get_validation_methods() {
-		if (count(self::$validation_methods) == 0) {
-			
-			$methodCLasses = ClassInfo::subclassesFor('FMValidationMethod');
-			$methods = array();
-			
-			foreach($methodCLasses as $class) {
-				if ($class != 'FMValidationMethod') {
-					$singleton = singleton($class);
-					if ($singleton->name == '') {
-						trigger_error('Validation class '.$class.' has no $name');
-						continue;
-					}
-					if (isset($methods[$singleton->name])) {
-						trigger_error('Validation class with name '.$singleton->name.' already exists ('.$class.' & '.$methods[$singleton->name]->class.')');
-						continue;
-					}
-					$methods[$singleton->name] = $singleton;
-				}
+	static function json_encode(array $input) {
+
+		$replaced = array();
+
+		foreach ($input as $key => $value) {
+			if (is_array($value)) {
+				$replaced['"%'.$key.'%"'] = self::json_encode($value);
+				$input[$key] = '%'.$key.'%';
+			} else if (strpos($value, 'function(') === 0) {
+				$replaced['"%'.$key.'%"'] = $value;
+				$input[$key] = '%'.$key.'%';
 			}
-			self::$validation_methods = $methods;
+		}
+
+		$output = json_encode($input);
+
+
+		$output = str_replace(array_keys($replaced), $replaced, $output);
+
+		return $output;
+	}
+
+
+	/**
+	 * Get all the validation rules for the associated form
+	 * 
+	 * @return 
+	 */
+	function getRules() {
+		$fields = $this->getFields();
+		$allRules = array();
+		
+		foreach ($fields as $field) {
+			$fieldRules = $field->getValidationRules();
+			$allRules[$field->getName()] = $fieldRules;
 		}
 		
-		return self::$validation_methods;
-	}
-	
-	/**
-		* finds all subclasses of FMValidationMethod and adds singletons to a list (if it hasn't already)
-		* 
-		* @return mixed FMValidationMethod or false
-	 */
-	static function get_validation_method($methodName) {
-		if (count(self::$validation_methods) == 0) {
-			self::get_validation_methods();
-		}
-		if (isset(self::$validation_methods[$methodName])) {
-			return self::$validation_methods[$methodName];
-		} else {
-			return false;
-		}
+		return $allRules;
 	}
 
-	
 	/**
-		* if passed a boolean, will set $ignore_missing_methods, if not passed anything will return $ignore_missing_methods
-		* 
-		* @param bool
-		* @return bool
-	 */
-	static function ignore_missing_methods($set = null) {
-		if (is_null($set)) {
-			return self::$ignore_missing_methods;
-		} else {
-			self::$ignore_missing_methods = ($set ? true : false);
-		}
-	}
-
-
-	/******************************  ******************************/
-
-
-	/**
-	 * Returns true if the named field is "required".
+	 * Get all the validation rules for the associated form for use in javascript
 	 * 
-	 * @param string $fieldName 
-	 * @return bool
+	 * @return 
 	 */
-	function fieldIsRequired($fieldName) {
-		if (isset($this->rules[$fieldName]['required'])) {
-			return true;
+	function getRulesForJavaScript() {
+		$fields = $this->getFields();
+		$allRules = array();
+		
+		foreach ($fields as $field) {
+			$fieldRules = $field->getValidationRules();
+			foreach ($fieldRules as $ruleName => $ruleValue) {
+				$method = $field->getValidationMethod($ruleName);
+				if ($ruleForJavaScript = $method->convertRuleForJavascript()) {
+					$fieldRules[$ruleName] = $ruleForJavaScript;
+				}
+			}
+			if ($fieldRules) {
+				$allRules[$field->getName()] = $fieldRules;
+			}
+			
 		}
-		return false;
+		
+		return $allRules;
+	}
+
+
+	/**
+	 * Get all the validation messages for the associated form
+	 * 
+	 * @return array
+	 */
+	function getMessages() {
+		$fields = $this->getFields();
+		$allMessages = array();
+		
+		foreach ($fields as $field) {
+			$fieldMessages = $field->getValidationMessages();
+			if ($fieldMessages) {
+				$allMessages[$field->getName()] = $fieldMessages;
+			}
+			
+		}
+		
+		return $allMessages;
+	}
+
+
+	/**
+	 * Get an array of the custom JS validation functions in $ruleName => "function() {}" format
+	 * 
+	 * @return array
+	 */
+	function getCustomJavascriptMethods() {
+		// include custom rules
+		$fields = $this->getFields();
+		$methods = array();
+
+		foreach ($fields as $field) {
+			$fieldRules = $field->getValidationRules();
+			foreach ($fieldRules as $ruleName => $ruleValue) {
+				$method = $field->getValidationMethod($ruleName);
+				if ($script = $method->javascript()) {
+					$methods[$ruleName] = $script;
+				}
+			}
+			
+		}
+
+		return $methods;
 	}
 
 

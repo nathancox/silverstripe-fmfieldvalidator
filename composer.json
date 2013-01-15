@@ -1,0 +1,16 @@
+{
+	"name": "nathancox/fmfieldvalidator",
+	"description": "A form validator for SilverStripe designed to work with the jquery.validate plugin",
+	"type": "silverstripe-module",
+	"homepage": "https://github.com/nathancox/silverstripe-fmfieldvalidator",
+	"keywords": ["silverstripe", "validation", "validator"],
+	"authors": [
+		{
+			"name": "Nathan Cox",
+			"email": "nathan@flyingmonkey.co.nz"
+		}
+	],
+	"require": {
+		"silverstripe/framework": ">=3.0"
+	}
+}

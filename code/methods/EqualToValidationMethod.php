@@ -1,19 +1,40 @@
 <?php
-
+/**
+ * Valid if the field's value is equal to the value of another field (specified by it's name).
+ *
+ * eg:
+ * 			$fields->push($passwordField = new TextField('Password', 'Password'));
+ *
+ *			...
+ *   		
+ *   		$fields->push($confirmPasswordField = new TextField('ConfirmPassword', 'Confirm Password'));
+ * 			$confirmPasswordField->setValidationRules(array(
+ *				'equalTo' => 'Password'	
+ *			));
+ *			$confirmPasswordField->setValidationMessages(array(
+ *				'equalTo' => "whoops, your passwords don't match"
+ *			));
+ *
+ * It could also be formatted like this:
+ *
+ *			$passwordField->setValidationRules(array(
+ *				'equalTo' => array(
+ *					'value' => 'Password',
+ *					'message' => "whoops, your passwords don't match"
+ *				)
+ *			));
+ *
+ * 
+ */
 class EqualToValidationMethod extends FMValidationMethod {
-	var $name = 'equalTo';
-	
-	// we don't need to add any js, jquery.validate already supports this
-	function javascript() {
-		return false;
-	}
+	var $ruleName = 'equalTo';
 	
 	function php($field, $ruleValue, $form) {
 		$valid = false;
-		$fieldValue = $field->value();
-		$fields = $form->Fields();
+		$fieldValue = $this->getField()->value();
+		$fields = $this->getForm()->Fields();
 		
-		if ($equalToField = $fields->dataFieldByName($ruleValue)) {
+		if ($equalToField = $fields->dataFieldByName($this->getFieldRule())) {
 			$valid = ($fieldValue == $equalToField->value());
 		} else {
 			// @TODO: what do we do if the field we're matching with doesn't exist?
@@ -27,8 +48,8 @@ class EqualToValidationMethod extends FMValidationMethod {
 	}
 	
 	
-	function convertRuleForJavascript($field, $ruleValue, $form) {
-		$otherField = $form->dataFieldByName($ruleValue);
+	function convertRuleForJavascript() {
+		$otherField = $this->getForm()->fields->dataFieldByName($this->getFieldRule());
 		if ($otherField) {
 			return '#'.$otherField->ID();
 		} else {
