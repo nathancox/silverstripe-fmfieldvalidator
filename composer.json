@@ -4,6 +4,7 @@
 	"type": "silverstripe-module",
 	"homepage": "https://github.com/nathancox/silverstripe-fmfieldvalidator",
 	"keywords": ["silverstripe", "validation", "validator"],
+	"license": "BSD-3-Clause",
 	"authors": [
 		{
 			"name": "Nathan Cox",
