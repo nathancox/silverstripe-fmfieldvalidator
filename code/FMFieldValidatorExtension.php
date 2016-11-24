@@ -1,27 +1,27 @@
 <?php
 	/**
 	 * An extension applied to FormField to add validation-related methods and properties for FMFieldValidator
-	 * 
+	 *
 	 */
 class FMFieldValidatorExtension extends Extension {
 	var $validationRules = array();
 	var $validationMessages = array();
-	
+
 
 
 	/**
 	 * Fetch the complete ruleset for this field
-	 * 
-	 * @return array 
+	 *
+	 * @return array
 	 */
 	function getValidationRules() {
 		return $this->validationRules;
 	}
-	
+
 	/**
 	 * Save a complete ruleset to this field
-	 * 
-	 * @param array $rules 
+	 *
+	 * @param array $rules
 	 */
 	function setValidationRules(array $rules) {
 		$this->validationRules = array();
@@ -30,16 +30,16 @@ class FMFieldValidatorExtension extends Extension {
 			$this->setValidationRule($ruleName, $settings);
 		}
 	}
-	
+
 
 	/**
 	 * Set a single validation rule
-	 * 
-	 * @param string $ruleName The name of the rule 
-	 * @param mixed $settings either the rule value (eg "true") or an array with value and message parameters 
+	 *
+	 * @param string $ruleName The name of the rule
+	 * @param mixed $settings either the rule value (eg "true") or an array with value and message parameters
 	 */
 	function setValidationRule($ruleName, $settings) {
-		
+
 		$value = $settings;
 		if (is_array($settings)) {
 			if (isset($settings['value'])) {
@@ -49,7 +49,7 @@ class FMFieldValidatorExtension extends Extension {
 			if (isset($settings['message'])) {
 				$this->setValidationMessage($ruleName, $settings['message']);
 			}
-			
+
 		}
 
 		$this->validationRules[$ruleName] = $value;
@@ -65,9 +65,9 @@ class FMFieldValidatorExtension extends Extension {
 
 	/**
 	 * Return the details for a given rule on this field, if they exist
-	 * 
+	 *
 	 * @param string $ruleName
-	 * @return mixed false if this rule isn't set, otherwise an array 
+	 * @return mixed false if this rule isn't set, otherwise an array
 	 */
 	function getValidationRule($ruleName) {
 		if (isset($this->validationRules[$ruleName])) {
@@ -76,12 +76,12 @@ class FMFieldValidatorExtension extends Extension {
 			return false;
 		}
 	}
-	
-	
+
+
 	/**
 	 * Get all this field's rules for use in the javascript validator
-	 * 
-	 * @return array 
+	 *
+	 * @return array
 	 */
 	function getValidationRulesForJavascript() {
 		$rules = $this->getValidationRules();
@@ -90,13 +90,13 @@ class FMFieldValidatorExtension extends Extension {
 		}
 		return $rules;
 	}
-	
+
 
 	/**
 	 * Get a specific rule for use in the javascript validator
-	 * 
+	 *
 	 * @param string $name 	The name of the rule
-	 * @return string 
+	 * @return string
 	 */
 	function getValidationRuleForJavascript($ruleName) {
 		$fieldName = $this->owner->getName();
@@ -105,7 +105,7 @@ class FMFieldValidatorExtension extends Extension {
 			return null;
 		}
 		if ($method = FMFieldValidator::get_validation_method($ruleName)) {
-			
+
 			if ($newValue = $method->convertRuleForJavascript($this, $ruleValue, $this->owner->getForm())) {
 				$ruleValue = $newValue;
 			}
@@ -117,17 +117,17 @@ class FMFieldValidatorExtension extends Extension {
 		}
 	}
 
-	
 
-	
 
-	
-	
-	
+
+
+
+
+
 	/**
 	 * Save a complete message set to this field
 	 *
-	 * @param array $messages 
+	 * @param array $messages
 	 */
 	function setValidationMessages(array $messages) {
 		foreach ($messages as $ruleName => $message) {
@@ -138,30 +138,30 @@ class FMFieldValidatorExtension extends Extension {
 
 	/**
 	 * Save a validation message set to this field
-	 * 
-	 * @param string $ruleName 
-	 * @param string $message 
+	 *
+	 * @param string $ruleName
+	 * @param string $message
 	 */
 	function setValidationMessage($ruleName, $message) {
 		$this->validationMessages[$ruleName] = $message;
 	}
 
 
-	
+
 	/**
 	 * Fetch the complete message set for this field
-	 * 
-	 * @return array 
+	 *
+	 * @return array
 	 */
 	function getValidationMessages() {
 		return $this->validationMessages;
 	}
-	
+
 	/**
 	 * Return the message for a given rule on this field, if it exists
-	 * 
+	 *
 	 * @param string $ruleName
-	 * @return mixed false if this rule isn't set, otherwise a string 
+	 * @return mixed false if this rule isn't set, otherwise a string
 	 */
 	function getValidationMessage($ruleName) {
 		if (isset($this->validationMessages[$ruleName])) {
@@ -170,16 +170,16 @@ class FMFieldValidatorExtension extends Extension {
 			return false;
 		}
 	}
-	
 
 
 
 
-	
+
+
 	/**
 	 * Returns the message for a field, falling back to default if not defined
-	 * 
-	 * @param string $ruleName 
+	 *
+	 * @param string $ruleName
 	 * @return string
 	 */
 	/*
@@ -199,7 +199,7 @@ class FMFieldValidatorExtension extends Extension {
 			} else {
 				return $messages;
 			}
-		} 
+		}
 
 		if ($defaultMessage = FMFieldValidator::get_default_message($ruleName)) {
 			return $defaultMessage;
@@ -214,9 +214,9 @@ class FMFieldValidatorExtension extends Extension {
 
 	/**
 	 * Get the FMValidationMethod object for the given rule
-	 * 
+	 *
 	 * @param string $name 	The name of the rule
-	 * @return FMValidationMethod 
+	 * @return FMValidationMethod
 	 */
 	function getValidationMethod($ruleName) {
 		$method = FMFieldValidator::get_validation_method($ruleName, $this->owner);
@@ -224,12 +224,12 @@ class FMFieldValidatorExtension extends Extension {
 	}
 
 
-	
+
 	/**
 	 * Validates this form field server-side
-	 * 
-	 * @param FMFieldValidator $validator 
-	 * @return 
+	 *
+	 * @param FMFieldValidator $validator
+	 * @return
 	 */
 	function validatePHP(FMFieldValidator $validator) {
 		$rules = $this->getValidationRules();
@@ -239,11 +239,11 @@ class FMFieldValidatorExtension extends Extension {
 		$variant = false;
 		foreach ($rules as $ruleName => $ruleValue) {
 
-			
 
-		
+
+
 			if ($method = $this->getValidationMethod($ruleName)) {
-				
+
 				$result = $method->validate();
 				$validates = $method->isValid();
 
@@ -255,7 +255,7 @@ class FMFieldValidatorExtension extends Extension {
 					} else if (isset($validationResult['variant'])) {
 						$variant = $validationResult['variant'];
 					}
-					
+
 				} else if (is_string($validationResult)) {
 					$message = $validationResult;
 					$validates = false;
@@ -279,7 +279,7 @@ class FMFieldValidatorExtension extends Extension {
 					$message = $method->getDefaultMessage();
 				}
 
-				
+
 
 				$valid = ($validates && $valid);
 				if (!$validates) {
@@ -289,29 +289,29 @@ class FMFieldValidatorExtension extends Extension {
 						$method->getMessageType()
 					);
 				}
-				
+
 			} else {
 				trigger_error('Field '.$this->owner->getName().' is trying to validate with a non-existent rule ('.$ruleName.')');
 			}
 		}
 		return $valid;
 	}
-	
-	
+
+
 /*
-	
+
 
 	$validationRule = FMFieldValidator::get_validation_method($ruleName, $this->owner, $validator->getForm());
 	$validationRule->setField($this->owner);
 	$result = $validationRule->validate();
-	
+
 	$message = $validationRule->getMessage();
 	$messageType = $validationRule->getMessageType();
 	OR
 	$message = $result['message'];
 	$messageType = $result['messageType'];
-	
-	
+
+
 */
 
 }

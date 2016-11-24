@@ -4,7 +4,7 @@
 */
 class IsExactlyValidationMethod extends FMValidationMethod {
 	var $ruleName = 'isExactly';
-	
+
 	function javascript() {
 		$script = <<<JS
 			function(value, element, param) {
@@ -18,19 +18,19 @@ JS
 		;
 		return $script;
 	}
-	
+
 	function php($field, $ruleValue, $form) {
 		$fieldValue = $this->getField()->value();
-		
+
 		if ($fieldValue !== $this->getFieldRule()) {
 			$this->setValid(false);
 		}
-		
+
 	}
-	
-	
+
+
 	function defaultMessage() {
 		return 'wrong answer';
 	}
-	
+
 }

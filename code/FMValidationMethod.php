@@ -5,7 +5,7 @@ class FMValidationMethod extends Object {
 
 	/**
 	 * Store the form field we're validating
-	 * 
+	 *
 	 * @var FormField
 	 */
 	var $ruleName;
@@ -13,7 +13,7 @@ class FMValidationMethod extends Object {
 
 	/**
 	 * The default error message
-	 * 
+	 *
 	 * @var String
 	 */
 	var $defaultMessage = 'error validating field';
@@ -21,7 +21,7 @@ class FMValidationMethod extends Object {
 
 	/**
 	 * For manually setting error messages
-	 * 
+	 *
 	 * @var String
 	 */
 	var $message = false;
@@ -29,14 +29,14 @@ class FMValidationMethod extends Object {
 
 	/**
 	 * Stores whether we've called validate();
-	 * 
+	 *
 	 * @var boolean
 	 */
 	var $haveValidated = false;
 
 	/**
 	 * Stores whether the field is valid
-	 * 
+	 *
 	 * @var boolean
 	 */
 	var $isValid = true;
@@ -45,15 +45,15 @@ class FMValidationMethod extends Object {
 
 	/**
 	 * Store the form field we're validating
-	 * 
+	 *
 	 * @var FormField
 	 */
 	private $field;
 
 	/**
 	 * __constructor
-	 * 
-	 * @param FormField $field The field we're validating against 
+	 *
+	 * @param FormField $field The field we're validating against
 	 */
 	function __construct(FormField $field = null) {
 		if ($field) {
@@ -67,8 +67,8 @@ class FMValidationMethod extends Object {
 
 	/**
 	 * Set the form field we're validating
-	 * 
-	 * @param FormField $field The field we're validating against 
+	 *
+	 * @param FormField $field The field we're validating against
 	 */
 	function setField(FormField $field) {
 		$this->field = $field;
@@ -76,7 +76,7 @@ class FMValidationMethod extends Object {
 
 	/**
 	 * Get the form field we're validating
-	 * 
+	 *
 	 * @return FormField
 	 */
 	function getField() {
@@ -86,7 +86,7 @@ class FMValidationMethod extends Object {
 
 	/**
 	 * Return the default error message
-	 * 
+	 *
 	 * @return string
 	 */
 	function getDefaultMessage() {
@@ -95,7 +95,7 @@ class FMValidationMethod extends Object {
 
 	/**
 	 * Get the form our field belongs to
-	 * 
+	 *
 	 * @return FormField
 	 */
 	function getForm() {
@@ -104,7 +104,7 @@ class FMValidationMethod extends Object {
 
 	/**
 	 * Return the form field's value for this rule
-	 * 
+	 *
 	 * @return string
 	 */
 	function getFieldRule() {
@@ -115,8 +115,8 @@ class FMValidationMethod extends Object {
 	}
 
 	/**
-	 * Return the form field's message for this 
-	 * 
+	 * Return the form field's message for this
+	 *
 	 * @return string
 	 */
 	function getFieldMessage() {
@@ -130,7 +130,7 @@ class FMValidationMethod extends Object {
 
 	/**
 	 * Return the rule name (eg "required" or "maxlength")
-	 * 
+	 *
 	 * @return string
 	 */
 	function getRuleName() {
@@ -140,26 +140,26 @@ class FMValidationMethod extends Object {
 
 	/**
 	 * Set the message type for the validator error (used as a classname on the field)
-	 * 
+	 *
 	 * @return string
 	 */
 	function setMessageType($input) {
 		$this->messageType = $input;
-	}	
+	}
 
 	/**
 	 * Get the message type for the validator error (used as a classname on the field)
-	 * 
+	 *
 	 * @return string
 	 */
 	function getMessageType() {
 		return $this->messageType;
 	}
 
-	
+
 	/**
-	 * 
-	 * 
+	 *
+	 *
 	 * @return boolean
 	 */
 	function isValid() {
@@ -168,8 +168,8 @@ class FMValidationMethod extends Object {
 
 
 		/**
-	 * 
-	 * 
+	 *
+	 *
 	 * @param boolean
 	 */
 	function setValid($isValid, $dontMarkAsValidated = false) {
@@ -177,13 +177,13 @@ class FMValidationMethod extends Object {
 		if (!$dontMarkAsValidated) {
 			$this->haveValidated = true;
 		}
-		
+
 	}
 
 
 	/**
-	 * 
-	 * 
+	 *
+	 *
 	 * @return boolean
 	 */
 	function haveValidated() {
@@ -192,7 +192,7 @@ class FMValidationMethod extends Object {
 
 	/**
 	 * Manually set the error message
-	 * 
+	 *
 	 * @return string
 	 */
 	function setMessage($message) {
@@ -202,7 +202,7 @@ class FMValidationMethod extends Object {
 
 	/**
 	 * Get the message after validation
-	 * 
+	 *
 	 * @return string
 	 */
 	function getMessage() {
@@ -217,7 +217,7 @@ class FMValidationMethod extends Object {
 
 	/**
 	 * Returns the rule value converted for use in JavaScript if needed
-	 * 
+	 *
 	 * @return mixed String or false to use the normal value
 	 */
 	function convertRuleForJavascript() {
@@ -229,7 +229,7 @@ class FMValidationMethod extends Object {
 
 	/**
 	 * Get the javascript used to validate this rule client-side.  This should be overwritten in subclasses.
-	 * 
+	 *
 	 * @return string
 	 */
 	function javascript() {
@@ -238,7 +238,7 @@ class FMValidationMethod extends Object {
 
 	/**
 	 * The method to validate server side.  This should be overwritten in subclasses.
-	 * 
+	 *
 	 * @return string
 	 */
 	function php($field, $ruleValue, $form) {
@@ -248,7 +248,7 @@ class FMValidationMethod extends Object {
 
 	/**
 	 * The method to validate server side.  This should be overwritten in subclasses.
-	 * 
+	 *
 	 * @return string
 	 */
 	function validate() {
@@ -271,6 +271,6 @@ class FMValidationMethod extends Object {
 		$this->haveValidated = true;
 		return $this->isValid();
 	}
-	
+
 
 }

@@ -6,13 +6,13 @@
 class EmailValidationMethod extends FMValidationMethod {
 	var $ruleName = 'email';
 	var $defaultMessage = 'email address not valid';
-	
+
 	function php($field, $ruleValue, $form) {
 		$valid = false;
 		$fieldValue = trim($field->value());
-		
+
 		$pattern = '^[a-z0-9!#$%&\'*+/=?^_`{|}~-]+(?:\\.[a-z0-9!#$%&\'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$';
-		
+
 
 		// PHP uses forward slash (/) to delimit start/end of pattern, so it must be escaped
 		$pattern = str_replace('/', '\\/', $pattern);
@@ -22,8 +22,8 @@ class EmailValidationMethod extends FMValidationMethod {
 		} else {
 			$valid = true;
 		}
-		
+
 		return $valid;
 	}
-	
+
 }
